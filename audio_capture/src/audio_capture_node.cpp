@@ -6,9 +6,7 @@
 #include <rclcpp/rclcpp.hpp>
 #include <rclcpp_components/register_node_macro.hpp>
 
-#include "audio_common_msgs/msg/audio_data.hpp"
-#include "audio_common_msgs/msg/audio_data_stamped.hpp"
-#include "audio_common_msgs/msg/audio_info.hpp"
+#include <std_msgs/msg/byte_multi_array.hpp>
 
 namespace audio_capture
 {
@@ -54,9 +52,7 @@ namespace audio_capture
         this->declare_parameter<std::string>("device", "");
         this->get_parameter("device", device);
 
-        _pub = this->create_publisher<audio_common_msgs::msg::AudioData>("audio", 10);
-        _pub_stamped = this->create_publisher<audio_common_msgs::msg::AudioDataStamped>("audio_stamped", 10);
-        _pub_info = this->create_publisher<audio_common_msgs::msg::AudioInfo>("audio_info", 1);
+        _pub = this->create_publisher<std_msgs::msg::ByteMultiArray>("audio", 10);
 
         _loop = g_main_loop_new(NULL, false);
         _pipeline = gst_pipeline_new("ros_pipeline");
@@ -165,20 +161,6 @@ namespace audio_capture
         gst_element_set_state(GST_ELEMENT(_pipeline), GST_STATE_PLAYING);
 
         _gst_thread = boost::thread( boost::bind(g_main_loop_run, _loop) );
-
-        _timer_info = rclcpp::create_timer(this, get_clock(), std::chrono::seconds(5), [this] { publishInfo(); });
-        publishInfo();
-      }
-
-      void publishInfo() {
-
-        audio_common_msgs::msg::AudioInfo info_msg;
-        info_msg.channels = _channels;
-        info_msg.sample_rate = _sample_rate;
-        info_msg.sample_format = _sample_format;
-        info_msg.bitrate = _bitrate;
-        info_msg.coding_format = _format;
-        _pub_info->publish(info_msg);
       }
 
       ~AudioCaptureNode()
@@ -194,14 +176,9 @@ namespace audio_capture
         exit(code);
       }
 
-      void publish( const audio_common_msgs::msg::AudioData &msg )
+      void publish( const std_msgs::msg::ByteMultiArray &msg )
       {
         _pub->publish(msg);
-      }
-
-      void publishStamped( const audio_common_msgs::msg::AudioDataStamped &msg )
-      {
-        _pub_stamped->publish(msg);
       }
 
       static GstFlowReturn onNewBuffer (GstAppSink *appsink, gpointer userData)
@@ -214,23 +191,17 @@ namespace audio_capture
 
         GstBuffer *buffer = gst_sample_get_buffer(sample);
 
-        audio_common_msgs::msg::AudioData msg;
-        audio_common_msgs::msg::AudioDataStamped stamped_msg;
-        GstClockTime buffer_time = gst_element_get_base_time(server->_source)+GST_BUFFER_PTS(buffer);
-        stamped_msg.header.stamp.sec = RCL_NS_TO_S(buffer_time);
-        stamped_msg.header.stamp.nanosec = buffer_time - RCL_S_TO_NS(stamped_msg.header.stamp.sec);
+        std_msgs::msg::ByteMultiArray msg;
 
         gst_buffer_map(buffer, &map, GST_MAP_READ);
         msg.data.resize( map.size );
 
         memcpy( &msg.data[0], map.data, map.size );
-        stamped_msg.audio = msg;
 
         gst_buffer_unmap(buffer, &map);
         gst_sample_unref(sample);
 
         server->publish(msg);
-        server->publishStamped(stamped_msg);
 
         return GST_FLOW_OK;
       }
@@ -251,9 +222,7 @@ namespace audio_capture
       }
 
     private:
-      rclcpp::Publisher<audio_common_msgs::msg::AudioData>::SharedPtr _pub;
-      rclcpp::Publisher<audio_common_msgs::msg::AudioDataStamped>::SharedPtr _pub_stamped;
-      rclcpp::Publisher<audio_common_msgs::msg::AudioInfo>::SharedPtr _pub_info;
+      rclcpp::Publisher<std_msgs::msg::ByteMultiArray>::SharedPtr _pub;
 
       rclcpp::TimerBase::SharedPtr _timer_info;
 

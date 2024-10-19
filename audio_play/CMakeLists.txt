@@ -12,7 +12,7 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclcpp_components REQUIRED)
-find_package(audio_common_msgs REQUIRED)
+find_package(std_msgs REQUIRED)
 find_package(PkgConfig)
 pkg_check_modules(GST1.0 gstreamer-1.0 REQUIRED)
 find_package(Boost REQUIRED COMPONENTS thread)
@@ -25,7 +25,7 @@ target_include_directories(${PROJECT_NAME} PRIVATE ${GST1.0_INCLUDE_DIRS})
 ament_target_dependencies(${PROJECT_NAME}
   rclcpp
   rclcpp_components
-  audio_common_msgs
+  std_msgs
 )
 
 target_link_libraries(${PROJECT_NAME} ${GST1.0_LIBRARIES} ${Boost_LIBRARIES})

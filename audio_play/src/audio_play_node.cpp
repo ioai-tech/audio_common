@@ -5,7 +5,7 @@
 #include <rclcpp/rclcpp.hpp>
 #include <rclcpp_components/register_node_macro.hpp>
 
-#include "audio_common_msgs/msg/audio_data.hpp"
+#include <std_msgs/msg/byte_multi_array.hpp>
 
 namespace audio_play
 {
@@ -48,7 +48,7 @@ namespace audio_play
         this->get_parameter("sample_rate", sample_rate);
         this->get_parameter("sample_format", sample_format);
 
-        _sub = this->create_subscription<audio_common_msgs::msg::AudioData>(
+        _sub = this->create_subscription<std_msgs::msg::ByteMultiArray>(
             "audio", 10, std::bind(&AudioPlayNode::onAudio, this, std::placeholders::_1));
 
         _loop = g_main_loop_new(NULL, false);
@@ -145,7 +145,7 @@ namespace audio_play
 
     private:
 
-      void onAudio(const audio_common_msgs::msg::AudioData::SharedPtr msg) const
+      void onAudio(const std_msgs::msg::ByteMultiArray::SharedPtr msg) const
       {
         GstBuffer *buffer = gst_buffer_new_and_alloc(msg->data.size());
         gst_buffer_fill(buffer, 0, &msg->data[0], msg->data.size());
@@ -189,7 +189,7 @@ namespace audio_play
         g_object_unref (audiopad);
       }
 
-      rclcpp::Subscription<audio_common_msgs::msg::AudioData>::SharedPtr _sub;
+      rclcpp::Subscription<std_msgs::msg::ByteMultiArray>::SharedPtr _sub;
       boost::thread _gst_thread;
 
       GstElement *_pipeline, *_source, *_sink, *_decoder, *_convert, *_audio, *_resample, *_filter;
