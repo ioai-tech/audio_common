@@ -208,6 +208,7 @@ namespace audio_capture
 
       static gboolean onMessage (GstBus *bus, GstMessage *message, gpointer userData)
       {
+        (void)bus;
         AudioCaptureNode *server = reinterpret_cast<AudioCaptureNode*>(userData);
         GError *err;
         gchar *debug;

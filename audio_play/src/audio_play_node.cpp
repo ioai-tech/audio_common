@@ -158,6 +158,7 @@ namespace audio_play
      static void cb_newpad (GstElement *decodebin, GstPad *pad, 
                              gpointer data)
       {
+        (void) decodebin;
         AudioPlayNode *client = reinterpret_cast<AudioPlayNode*>(data);
 
         GstCaps *caps;
